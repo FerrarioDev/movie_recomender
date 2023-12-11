@@ -3,5 +3,5 @@ from . import views
 
 
 urlpatterns = [
-    # route is a string contains a URL pattern
+    path('', views.movie_recomendation_view, name='recommendations'),
 ]
