@@ -9,9 +9,20 @@ def check_valid_genres(genres: str) -> bool:
     else:
         return False
 
-# Add a Jaccard similarity method here
+# Method to calculate Jaccard Similarity
+def jaccard_similarity(list1: list, list2: list) -> float:
+    s1 = set(list1)
+    s2 = set(list2)
+    return float(len(s1.intersection(s2)) / len(s1.union(s2)))
 
-# Add a movie similarity method here
+# Calculate the similarity between two movies
+def similarity_between_movies(movie1: Movie, movie2: Movie) -> float:
+    if check_valid_genres(movie1.genres) and check_valid_genres(movie2.genres):
+        m1_generes = movie1.genres.split()
+        m2_generes = movie2.genres.split()
+        return jaccard_similarity(m1_generes, m2_generes)
+    else:
+        return 0
 
 
 class Command(BaseCommand):
@@ -21,9 +32,25 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **kwargs):
-        # Figure the recommended field for each unwatched movie
-        # Based on the similarity on movie genres
-        pass
+        THRESHOLD = 0.8
 
-
-# python manage.py make_recommendations
+        watched_movies = Movie.objects.filter(watched = True)
+        unwatched_movies = Movie.objects.filter(watched = False)
+        
+        for unwatched in unwatched_movies:
+            max_similarity = 0
+            will_recommend = False
+            for watched in watched_movies:
+                similarity = similarity_between_movies(unwatched_movies, watched)
+                if similarity >= max_similarity:
+                    max_similarity = similarity
+                
+                if max_similarity >= THRESHOLD:
+                    break
+        
+            if max_similarity > THRESHOLD:
+                will_recommend = True
+                print(f"Find a movie recommendation: {unwatched.original_title}")
+            
+            unwatched.recommended = will_recommend
+            unwatched.save()
